@@ -1,0 +1,315 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>慕乔大师 · 八字推命</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2c1810">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- 预加载 lunar-javascript -->
+<script src="lunar.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'PingFang SC','Microsoft YaHei','Noto Serif SC',serif;background:#1a0f08;color:#2c1810;min-height:100vh}
+.app{max-width:480px;margin:0 auto;background:#f5f0e8;min-height:100vh;position:relative;box-shadow:0 0 30px rgba(0,0,0,0.5)}
+
+/* 顶栏 */
+.header{background:linear-gradient(135deg,#2c1810,#1a0f08);padding:1rem 1rem 0.8rem;text-align:center;position:relative}
+.header::after{content:'';position:absolute;bottom:0;left:10%;right:10%;height:2px;background:linear-gradient(90deg,transparent,#c23b22,transparent)}
+.header .master{font-size:1rem;color:#c4a97d;letter-spacing:0.2em}
+.header .title{font-size:1.5rem;color:#f5f0e8;letter-spacing:0.3em;margin-top:0.2rem}
+.header .title .highlight{color:#c23b22}
+
+/* 内容区 */
+.content{padding:0.8rem 0.8rem 5rem}
+
+/* 输入区域 */
+.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.8rem}
+.input-group label{display:block;font-size:0.85rem;color:#8b7355;margin-bottom:0.15rem;letter-spacing:0.1em;padding-left:0.2rem}
+.input-group input,.input-group select{width:100%;padding:0.75rem 0.6rem;border:1px solid #c4a97d;border-radius:4px;background:rgba(255,255,255,0.5);font-size:1.15rem;color:#2c1810;font-family:inherit;outline:none}
+.input-group input:focus,.input-group select:focus{border-color:#c23b22}
+.full-width{grid-column:1/-1}
+
+/* 日历转换 */
+.cal-convert{text-align:center;font-size:0.75rem;color:#8b7355;padding:0.4rem;background:rgba(196,169,125,0.1);border:1px dashed #c4a97d;border-radius:4px;margin-bottom:0.8rem}
+
+/* 按钮 */
+.btn-push{width:100%;padding:0.9rem;background:linear-gradient(135deg,#c23b22,#8b1a1a);color:#f5f0e8;border:none;border-radius:6px;font-size:1.2rem;letter-spacing:0.3em;font-family:'PingFang SC','Microsoft YaHei',serif;cursor:pointer;box-shadow:0 2px 8px rgba(194,59,34,0.3)}
+.btn-push:active{transform:scale(0.97)}
+.btn-push:disabled{opacity:0.5}
+.btn-small{padding:0.5rem 1rem;font-size:0.85rem;letter-spacing:0.15em;border-radius:4px}
+
+/* 分隔 */
+.divider{text-align:center;color:#c4a97d;font-size:0.7rem;margin:0.8rem 0;position:relative}
+.divider::before,.divider::after{content:'';position:absolute;top:50%;height:1px;width:35%;background:#c4a97d}
+.divider::before{left:0}
+.divider::after{right:0}
+
+/* 结果区 */
+#result{min-height:100px}
+
+/* 四柱卡片 */
+.pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:0.3rem;margin:0.5rem 0}
+.pillar{border:1px solid #c4a97d;border-radius:4px;padding:0.5rem 0;text-align:center;background:rgba(255,255,255,0.3)}
+.pillar .gan{font-size:2rem;font-weight:700;color:#2c1810;line-height:1.3}
+.pillar .zhi{font-size:2rem;font-weight:700;color:#c23b22;line-height:1.3}
+.pillar .p-label{font-size:0.75rem;color:#8b7355;margin-top:0.15rem}
+.pillar .p-shishen{font-size:0.7rem;color:#8b1a1a;border-top:1px dashed #c4a97d;padding-top:0.15rem;margin-top:0.15rem}
+
+/* 大运表 */
+.yun-table{width:100%;border-collapse:collapse;margin:0.5rem 0;font-size:0.8rem}
+.yun-table th{background:rgba(196,169,125,0.15);padding:0.4rem 0.2rem;color:#8b7355;font-weight:400;border-bottom:1px solid #c4a97d;font-size:0.7rem}
+.yun-table td{text-align:center;padding:0.35rem 0.2rem;border-bottom:1px dashed rgba(196,169,125,0.3)}
+.yun-table tr:last-child td{border-bottom:none}
+.yun-gan{font-weight:700}
+.yun-zhi{color:#c23b22;font-weight:700}
+.yun-summary{text-align:center;font-size:0.8rem;color:#2c1810;padding:0.4rem;background:rgba(255,255,255,0.3);border:1px solid #c4a97d;border-radius:4px;margin:0.5rem 0}
+.yun-summary .label{color:#8b7355;font-size:0.7rem}
+
+/* 付款弹窗 */
+.pay-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem}
+.pay-card{background:#f5f0e8;border-radius:12px;padding:1.5rem;width:100%;max-width:340px;text-align:center;position:relative;animation:slideUp 0.3s ease}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.pay-card .lock-icon{font-size:2.5rem;margin-bottom:0.5rem}
+.pay-card .pay-title{font-size:1.2rem;color:#2c1810;margin-bottom:0.3rem}
+.pay-card .pay-price{font-size:2rem;color:#c23b22;font-weight:700;margin:0.5rem 0}
+.pay-card .pay-desc{font-size:0.75rem;color:#8b7355;margin-bottom:1rem;line-height:1.6}
+.qr-box{width:180px;height:180px;margin:0 auto 1rem;border:2px solid #c4a97d;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:white}
+.qr-box img{max-width:100%;max-height:100%}
+.qr-placeholder{text-align:center;color:#8b7355;font-size:0.75rem}
+.qr-placeholder .big{font-size:2.5rem;margin-bottom:0.3rem}
+.pay-input{display:flex;gap:0.5rem;margin-bottom:0.5rem}
+.pay-input input{flex:1;padding:0.6rem;border:1px solid #c4a97d;border-radius:4px;font-size:0.9rem;text-align:center;outline:none}
+.pay-input input:focus{border-color:#c23b22}
+.pay-input button{background:#c23b22;color:white;border:none;border-radius:4px;padding:0.6rem 1rem;font-size:0.85rem;cursor:pointer}
+.pay-close{position:absolute;top:0.5rem;right:0.8rem;font-size:1.5rem;color:#8b7355;cursor:pointer;background:none;border:none}
+.pay-toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#2c1810;color:white;padding:0.5rem 1rem;border-radius:4px;font-size:0.75rem;z-index:9999}
+
+/* 底部信息 */
+.footer{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;padding:0.5rem;text-align:center;font-size:0.6rem;color:#8b7355;background:#f5f0e8;border-top:1px solid #c4a97d}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <div class="master">慕乔大师</div>
+    <div class="title"><span class="highlight">八</span>字 · <span class="highlight">推</span>命</div>
+  </div>
+
+  <div class="content">
+    <!-- 输入区 -->
+    <div class="input-grid">
+      <div class="input-group"><label>年</label><input id="year" type="number" value="1990" min="1900" max="2100"></div>
+      <div class="input-group"><label>月</label><input id="month" type="number" value="1" min="1" max="12"></div>
+      <div class="input-group"><label>日</label><input id="day" type="number" value="1" min="1" max="31"></div>
+      <div class="input-group"><label>时</label><input id="hour" type="number" value="12" min="0" max="23"></div>
+      <div class="input-group"><label>性别</label>
+        <select id="gender"><option value="男">男</option><option value="女">女</option></select>
+      </div>
+      <div class="input-group"><label>日历</label>
+        <select id="calendar"><option value="solar">公历</option><option value="lunar">农历</option></select>
+      </div>
+    </div>
+
+    <div id="calConvert" class="cal-convert" style="display:none"></div>
+
+    <button id="btnPush" class="btn-push" onclick="onPush()">推 · 命</button>
+
+    <div class="divider">✦</div>
+
+    <!-- 结果区 -->
+    <div id="result">
+      <div style="text-align:center;color:#8b7355;font-size:1.3rem;padding:2rem 1rem;line-height:1.8">请输入生辰<br>点击「推命」起盘</div>
+    </div>
+  </div>
+
+  <div class="footer">慕乔大师 · 子平法排盘</div>
+</div>
+
+<!-- 付款弹窗 -->
+<div id="payOverlay" class="pay-overlay" style="display:none">
+  <div class="pay-card">
+    <button class="pay-close" onclick="closePay()">✕</button>
+    <div class="lock-icon">🔒</div>
+    <div class="pay-title">深度批命已锁定</div>
+    <div class="pay-price">1元</div>
+    <div class="pay-desc">支付后解锁 · 格局·性格·事业·婚姻·健康·流年</div>
+    <div class="qr-box">
+      <img id="payQR" src="pay_qr.png" style="max-width:100%;max-height:100%" alt="微信收款码">
+    </div>
+    <div style="text-align:left;font-size:0.72rem;color:#2c1810;line-height:2;margin-bottom:0.8rem;padding:0.5rem;background:rgba(196,169,125,0.1);border-radius:4px">
+      <b>📱 付款步骤：</b><br>
+      ① 长按上方二维码 → 保存到手机<br>
+      ② 打开微信 → 扫一扫 → 右上角「相册」<br>
+      ③ 选择刚保存的二维码 → 支付 <b style="color:#c23b22">1元</b><br>
+      ④ 复制微信账单里的「交易单号」后8位<br>
+      ⑤ 输入下方框内 → 点击验证 → 解锁批命
+    </div>
+    <div class="pay-input">
+      <input id="payCode" type="text" maxlength="10" placeholder="输入交易单号后8位">
+      <button onclick="verifyPay()">解锁</button>
+    </div>
+    <div style="font-size:0.6rem;color:#c4a97d">交易单号在微信支付通知里可查看</div>
+  </div>
+</div>
+
+<div id="payToast" class="pay-toast" style="display:none"></div>
+
+<script>
+// ===== 排盘核心 =====
+const TG='甲乙丙丁戊己庚辛壬癸', DZ='子丑寅卯辰巳午未申酉戌亥';
+const NAYIN={'甲子':'海中金','乙丑':'海中金','丙寅':'炉中火','丁卯':'炉中火','戊辰':'大林木','己巳':'大林木','庚午':'路旁土','辛未':'路旁土','壬申':'剑锋金','癸酉':'剑锋金','甲戌':'山头火','乙亥':'山头火','丙子':'涧下水','丁丑':'涧下水','戊寅':'城头土','己卯':'城头土','庚辰':'白蜡金','辛巳':'白蜡金','壬午':'杨柳木','癸未':'杨柳木','甲申':'泉中水','乙酉':'泉中水','丙戌':'屋上土','丁亥':'屋上土','戊子':'霹雳火','己丑':'霹雳火','庚寅':'松柏木','辛卯':'松柏木','壬辰':'长流水','癸巳':'长流水','甲午':'沙中金','乙未':'沙中金','丙申':'山下火','丁酉':'山下火','戊戌':'平地木','己亥':'平地木','庚子':'壁上土','辛丑':'壁上土','壬寅':'金箔金','癸卯':'金箔金','甲辰':'覆灯火','乙巳':'覆灯火','丙午':'天河水','丁未':'天河水','戊申':'大驿土','己酉':'大驿土','庚戌':'钗钏金','辛亥':'钗钏金','壬子':'桑柘木','癸丑':'桑柘木','甲寅':'大溪水','乙卯':'大溪水','丙辰':'沙中土','丁巳':'沙中土','戊午':'天上火','己未':'天上火','庚申':'石榴木','辛酉':'石榴木','壬戌':'大海水','癸亥':'大海水'};
+function getN(gz){return NAYIN[gz]||'-'}
+
+let isUnlock=localStorage.getItem('bz_unlock')==='true';
+let baziData=null;
+
+function calcBazi(y,m,d,h,min,g){
+  const L=typeof Lunar!=='undefined'?Lunar:null;
+  if(!L)return null;
+  const l=L.fromDate(new Date(y,m-1,d,h||12,min||0));
+  const ec=typeof EightChar!=='undefined'?EightChar.fromLunar(l):null;
+  if(!ec)return null;
+  const gc=g==='男'?1:0;
+  const r={
+    b:{y:ec.getYear(),m:ec.getMonth(),d:ec.getDay(),h:ec.getTime()},
+    g:{y:{a:ec.getYearGan(),z:ec.getYearZhi()},m:{a:ec.getMonthGan(),z:ec.getMonthZhi()},d:{a:ec.getDayGan(),z:ec.getDayZhi()},h:{a:ec.getTimeGan(),z:ec.getTimeZhi()}},
+    wx:{y:ec.getYearWuXing(),m:ec.getMonthWuXing(),d:ec.getDayWuXing(),h:ec.getTimeWuXing()},
+    ss:{y:ec.getYearShiShenGan(),m:ec.getMonthShiShenGan(),d:'日主',h:ec.getTimeShiShenGan()},
+    ny:{y:ec.getYearNaYin(),m:ec.getMonthNaYin(),d:ec.getDayNaYin(),h:ec.getTimeNaYin()},
+    sh:{y:ec.getYearHideGan(),m:ec.getMonthHideGan(),d:ec.getDayHideGan(),h:ec.getTimeHideGan()},
+    l:{y:l.getYear(),m:l.getMonth(),d:l.getDay(),yc:l.getYearInChinese(),mc:l.getMonthInChinese(),dc:l.getDayInChinese()}
+  };
+  try{
+    const yun=ec.getYun(gc);
+    r.dy={f:yun.isForward(),s:yun.getStartYear(),l:[]};
+    const da=yun.getDaYun().slice(0,10);
+    r.dy.l=da.map(d=>({g:d.getGanZhi()||'',s:d.getStartAge(),e:d.getEndAge(),sy:d.getStartYear(),ey:d.getEndYear()}));
+    const cy=new Date().getFullYear();
+    for(let i=0;i<r.dy.l.length;i++){if(cy>=r.dy.l[i].sy&&cy<=r.dy.l[i].ey){try{const ln=yun.getDaYun()[i].getLiuNian();r.ln=ln.slice(0,10).map(l=>({y:l.getYear(),g:l.getGanZhi()}));}catch(e){}break}}
+  }catch(e){r.dy={f:true,s:8,l:[]}}
+  return r;
+}
+
+function convCal(y,m,d,f){
+  try{
+    if(f==='lunar'){const l=Lunar.fromYmd(+y,+m,+d);return{l:l.getYearInChinese()+'年'+l.getMonthInChinese()+'月'+l.getDayInChinese()+'日',g:l.getYearInGanZhi()+' '+l.getMonthInGanZhi()+' '+l.getDayInGanZhi()}}
+    else{const l=Lunar.fromDate(new Date(+y,+m-1,+d));return{l:l.getYearInChinese()+'年'+l.getMonthInChinese()+'月'+l.getDayInChinese()+'日',g:l.getYearInGanZhi()+' '+l.getMonthInGanZhi()+' '+l.getDayInGanZhi()}}
+  }catch(e){return null}
+}
+
+// ===== 推命流程 =====
+function onPush(){
+  const y=+document.getElementById('year').value,m=+document.getElementById('month').value,d=+document.getElementById('day').value,h=+document.getElementById('hour').value||12,g=document.getElementById('gender').value;
+  if(!y||!m||!d){showToast('请填写完整的年月日');return}
+
+  const data=calcBazi(y,m,d,h,0,g);
+  if(!data){showToast('排盘失败,请检查日期');return}
+  baziData=data;
+
+  // 已解锁→直接显示结果
+  if(isUnlock){showResult(data);return}
+
+  // 未解锁→显示付款弹窗
+  showPay();
+  // 预显示基本盘(不带详批)
+  showBasicResult(data);
+}
+
+function showBasicResult(data){
+  const r=data, b=r.b, ss=r.ss, dy=r.dy;
+  const dir=dy.f?'顺行':'逆行';
+  const rows=(dy.l||[]).map((d,i)=>'<tr><td>'+(i+1)+'</td><td><span class="yun-gan">'+(d.g[0]||'')+'</span><span class="yun-zhi">'+(d.g[1]||'')+'</span></td><td>'+d.s+'</td><td>'+d.e+'</td></tr>').join('');
+
+  document.getElementById('result').innerHTML=
+    '<div style="text-align:center;font-size:0.7rem;color:#8b7355;margin-bottom:0.5rem">'+(r.l.yc||'')+'年'+(r.l.mc||'')+'月'+(r.l.dc||'')+'日</div>'+
+    '<div class="pillars">'+
+      [{l:'年',g:b.y[0],z:b.y[1],s:ss.y},{l:'月',g:b.m[0],z:b.m[1],s:ss.m},{l:'日',g:b.d[0],z:b.d[1],s:'日主'},{l:'时',g:b.h[0],z:b.h[1],s:ss.h}]
+      .map(p=>'<div class="pillar"><div class="gan">'+p.g+'</div><div class="zhi">'+p.z+'</div><div class="p-label">'+p.l+'柱</div><div class="p-shishen">'+p.s+'</div></div>').join('')+
+    '</div>'+
+    '<div class="yun-summary"><span class="label">大运·</span>'+dir+'<span style="margin:0 0.5rem;color:#c4a97d">|</span><span class="label">起运·</span>'+dy.s+'岁</div>'+
+    '<div style="font-size:0.65rem;color:#8b7355;text-align:center;margin-bottom:0.3rem">─ 大运详表 ─</div>'+
+    '<table class="yun-table"><thead><tr><th>运</th><th>干支</th><th>起岁</th><th>止岁</th></tr></thead><tbody>'+(rows||'<tr><td colspan="4" style="color:#8b7355;font-size:0.7rem">暂缺</td></tr>')+'</tbody></table>'+
+    '<div style="text-align:center;padding:1rem;color:#c23b22;font-size:0.8rem;border:1px dashed #c23b22;border-radius:4px;margin-top:0.5rem;background:rgba(194,59,34,0.05)">'+
+    '🔒 深度批命已锁定<br><span style="font-size:0.7rem;color:#8b7355">支付 1元 解锁完整命理分析</span></div>';
+}
+
+function showResult(data){
+  // Full result with detailed analysis - same as basic but without the lock overlay
+  // For now, just show basic + navin
+  const r=data,b=r.b,ss=r.ss,dy=r.dy,ny=r.ny;
+  const dir=dy.f?'顺行':'逆行';
+  const rows=(dy.l||[]).map((d,i)=>'<tr><td>'+(i+1)+'</td><td><span class="yun-gan">'+(d.g[0]||'')+'</span><span class="yun-zhi">'+(d.g[1]||'')+'</span></td><td>'+d.s+'</td><td>'+d.e+'</td></tr>').join('');
+
+  document.getElementById('result').innerHTML=
+    '<div style="text-align:center;font-size:0.7rem;color:#8b7355;margin-bottom:0.5rem">'+(r.l.yc||'')+'年'+(r.l.mc||'')+'月'+(r.l.dc||'')+'日</div>'+
+    '<div class="pillars">'+
+      [{l:'年',g:b.y[0],z:b.y[1],s:ss.y},{l:'月',g:b.m[0],z:b.m[1],s:ss.m},{l:'日',g:b.d[0],z:b.d[1],s:'日主'},{l:'时',g:b.h[0],z:b.h[1],s:ss.h}]
+      .map(p=>'<div class="pillar"><div class="gan">'+p.g+'</div><div class="zhi">'+p.z+'</div><div class="p-label">'+p.l+'柱</div><div class="p-shishen">'+p.s+'</div></div>').join('')+
+    '</div>'+
+    '<div class="yun-summary"><span class="label">大运·</span>'+dir+'<span style="margin:0 0.5rem;color:#c4a97d">|</span><span class="label">起运·</span>'+dy.s+'岁</div>'+
+    '<div style="font-size:0.65rem;color:#8b7355;text-align:center;margin-bottom:0.3rem">─ 大运详表 ─</div>'+
+    '<table class="yun-table"><thead><tr><th>运</th><th>干支</th><th>起岁</th><th>止岁</th></tr></thead><tbody>'+(rows||'<tr><td colspan="4" style="color:#8b7355;font-size:0.7rem">暂缺</td></tr>')+'</tbody></table>'+
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.3rem;margin-top:0.5rem">'+
+      ['y','m','d','h'].map(k=>'<div style="text-align:center;font-size:0.65rem;color:#8b7355;padding:0.3rem;background:rgba(255,255,255,0.3);border:1px solid #c4a97d;border-radius:4px"><div style="color:#8b1a1a;margin-bottom:0.1rem">'+k+'柱纳音</div><div>'+getN(b[k])+'</div></div>').join('')+
+    '</div>'+
+    '<div style="margin-top:0.5rem;padding:0.5rem;background:rgba(196,169,125,0.1);border:1px solid #c4a97d;border-radius:4px;font-size:0.7rem;color:#2c1810;line-height:1.8">'+
+      '<div style="font-size:0.65rem;color:#8b7355;margin-bottom:0.3rem">─ 命理分析 ─</div>'+
+      '<div>✅ 已解锁 · 感谢您的支持</div>'+
+      '<div style="margin-top:0.3rem;color:#8b7355;font-size:0.65rem">(完整AI分析功能即将上线)</div>'+
+    '</div>';
+}
+
+// ===== 付款系统 =====
+function showPay(){document.getElementById("payOverlay").style.display="flex"}}).catch(()=>{});
+}
+
+function closePay(){document.getElementById('payOverlay').style.display='none'}
+
+function verifyPay(){
+  const code=document.getElementById('payCode').value.trim();
+  if(code&&code.length>=4){
+    isUnlock=true;
+    localStorage.setItem('bz_unlock','true');
+    closePay();
+    showToast('✅ 已解锁!');
+    if(baziData)showResult(baziData);
+  }else{
+    showToast('请输入正确的交易码');
+  }
+}
+
+function showToast(msg){
+  const t=document.getElementById('payToast');
+  t.textContent=msg;t.style.display='block';
+  setTimeout(()=>t.style.display='none',3000);
+}
+
+// ===== 日历自动转换 =====
+let ct;
+function doConv(){
+  const y=document.getElementById('year').value,m=document.getElementById('month').value,d=document.getElementById('day').value,c=document.getElementById('calendar').value,div=document.getElementById('calConvert');
+  if(!y||!m||!d){div.style.display='none';return}
+  const r=convCal(y,m,d,c);
+  if(r){div.innerHTML=c==='solar'?'农历 '+r.l+' <span style="color:#c4a97d">'+r.g+'</span>':'公历 '+y+'年'+m+'月'+d+'日';div.style.display='block'}
+  else div.style.display='none'
+}
+['year','month','day','calendar'].forEach(id=>{const el=document.getElementById(id);el.addEventListener('input',()=>{clearTimeout(ct);ct=setTimeout(doConv,400)});el.addEventListener('change',doConv)});
+document.addEventListener('DOMContentLoaded',doConv);
+
+// Enter 推命
+document.querySelectorAll('input,select').forEach(el=>{el.addEventListener('keydown',e=>{if(e.key==='Enter')onPush()})});
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
