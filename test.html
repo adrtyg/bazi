@@ -1,0 +1,49 @@
+﻿<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>诊断页</title></head>
+<body style="padding:2rem;font-family:sans-serif">
+<h3>八字排盘诊断</h3>
+<div id="status">检测中...</div>
+<script src="lunar.js"></script>
+<script>
+const out = document.getElementById('status');
+let ok = 0, fail = 0;
+function check(name, val) {
+  const line = document.createElement('div');
+  if (val) { line.innerHTML = '✅ ' + name; ok++; }
+  else { line.innerHTML = '❌ ' + name; fail++; }
+  out.appendChild(line);
+}
+
+// 1. Check lunar library loaded
+check('typeof Lunar !== "undefined"', typeof Lunar !== 'undefined');
+check('typeof EightChar !== "undefined"', typeof EightChar !== 'undefined');
+check('typeof Solar !== "undefined"', typeof Solar !== 'undefined');
+
+// 2. Test calculation
+try {
+  if (typeof Lunar !== 'undefined') {
+    const l = Lunar.fromDate(new Date(1990, 0, 1, 12, 0, 0));
+    check('Lunar.fromDate 成功', l.getYear() > 0);
+    const ec = EightChar.fromLunar(l);
+    check('EightChar.fromLunar 成功', typeof ec.getYear === 'function');
+    check('八字年柱: ' + ec.getYear(), true);
+    check('八字月柱: ' + ec.getMonth(), true);
+    check('八字日柱: ' + ec.getDay(), true);
+    check('八字时柱: ' + ec.getTime(), true);
+  }
+} catch(e) { check('计算异常: ' + e.message, false); }
+
+// 3. Check DOM
+check('btnPush 存在', !!document.getElementById('btnPush'));
+check('onPush 函数', typeof onPush === 'function');
+
+const summary = document.createElement('div');
+summary.style.marginTop = '1rem';
+summary.style.padding = '0.5rem';
+summary.style.background = fail === 0 ? '#d4edda' : '#f8d7da';
+summary.innerHTML = fail === 0 ? '✅ 全部通过！八字排盘工作正常' : '❌ ' + fail + ' 项失败';
+out.appendChild(summary);
+</script>
+</body>
+</html>
